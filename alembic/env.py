@@ -2,20 +2,18 @@ import sys
 import asyncio
 from logging.config import fileConfig
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from sqlalchemy import engine_from_config
+from sqlalchemy import create_engine
 from sqlalchemy import pool
 from alembic import context
-
+from models import Base, DATABASE_URL
 # Add the root project directory to the sys.path
 sys.path.append("..")
-
-# Import your models and database session
-from models import Base, DATABASE_URL
 
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -33,22 +31,21 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+# Database URL
+DATABASE_URL = "postgresql+asyncpg://postgres:mysecretpassword@localhost:5432/serpenter_db"
 
-def run_migrations_offline() -> None:
+
+def run_migrations_offline():
     """Run migrations in 'offline' mode.
-
     This configures the context with just a URL
     and not an Engine, though an Engine is acceptable
     here as well.  By skipping the Engine creation
     we don't even need a DBAPI to be available.
-
     Calls to context.execute() here emit the given string to the
     script output.
-
     """
-    url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url,
+        url=DATABASE_URL,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -58,22 +55,24 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-async def run_migrations_online():
-    """Run migrations in 'online' mode."""
-    configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = DATABASE_URL  # Replace with your database URL if different
+# Create a synchronous engine for Alembic
+sync_engine = create_engine(DATABASE_URL.replace("+asyncpg", ""))
 
-    connectable = create_async_engine(DATABASE_URL, echo=True)
 
-    async with connectable.connect() as connection:
+def run_migrations_online():
+    """Run migrations in 'online' mode.
+    In this scenario we need to create an Engine
+    and associate a connection with the context.
+    """
+    connectable = sync_engine  # Use the synchronous engine
+
+    with connectable.connect() as connection:
         context.configure(
             connection=connection,
-            target_metadata=target_metadata,
-            process_revision_directives=process_revision_directives,
-            **current_app.extensions["migrate"].configure_args
+            target_metadata=target_metadata
         )
 
-        async with context.begin_transaction():
+        with context.begin_transaction():
             context.run_migrations()
 
 

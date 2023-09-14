@@ -24,7 +24,8 @@ class Doctor(Base):
     id = Column(Integer, primary_key=True, index=True)
     first_name = Column(String, index=True, nullable=False)
     last_name = Column(String, index=True, nullable=False)
-    specialty = Column(String, index=True)
+    special_interest = Column(String, index=True)
+    email = Column(String, unique=True, index=True)
 
 
 class Patient(Base):

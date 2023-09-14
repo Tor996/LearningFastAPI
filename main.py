@@ -12,12 +12,12 @@ app = FastAPI()
 
 
 # Dependency to get the database session
-def get_db():
+async def get_db():
     db = AsyncSessionLocal()
     try:
         yield db
     finally:
-        db.close()
+        await db.close()
 
 
 @app.get("/")

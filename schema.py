@@ -17,7 +17,6 @@ class DoctorUpdate(BaseModel):
     first_name: str
     last_name: str
     special_interest: str
-    years_of_experience: int
     email: str
 
     class Config:
